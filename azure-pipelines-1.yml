@@ -1,34 +1,68 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+name : Docker-CI
+
+
 
 trigger:
-- master
-
+  branches:
+    include:
+      - master
+ 
 pool:
-  vmImage: ubuntu-latest
-
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Pipeline.Workspace)'
-    artifact: 'lohi'
-    publishLocation: 'pipeline'
+  vmImage: 'ubuntu-latest'
+ 
+variables:
+  ImageName: '172054/juice-app:$(Build.BuildId)'
+ 
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:  
+  - job: Build
+    displayName: Build and push Docker image
+    steps:
+    - task: Docker@1
+      displayName: 'Build the Docker image'
+      inputs:
+        containerregistrytype: 'Container Registry'
+        dockerRegistryEndpoint: 'Docker Hub'
+        command: 'Build an image'
+        dockerFile: '**/Dockerfile'
+        imageName: '$(ImageName)'
+        includeLatestTag: true
+        useDefaultContext: false
+        buildContext: '.'
+     
+       
     
 
-  
+    - task: Docker@1
+      displayName: 'Push the Docker image to Dockerhub'
+      inputs:
+        containerregistrytype: 'Container Registry'
+        dockerRegistryEndpoint: 'Docker Hub'
+        command: 'Push an image'
+        imageName: '$(ImageName)'
+      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+   
+    - task: ContainerBuild@0
+      inputs:
+        dockerRegistryServiceConnection: 'Docker hub'
+        Dockerfile: 'Dockerfile'
 
+    - task: PublishCodeCoverageResults@1
+      inputs:
+       codeCoverageTool: 'JaCoCo'
+       summaryFileLocation: 'Lohith1'
+    
+    - task: HelmInstaller@0
+      inputs:
+        helmVersion: '2.14.1'
+        installKubectl: true
+
+    - task: SonarQubeAnalyze@4
   
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+    - task: DotNetCoreCLI@2
+      inputs:
+          command: 'test'
+          testRunTitle: 'testing in progress'
+          workingDirectory: '/loh'
