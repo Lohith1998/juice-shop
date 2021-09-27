@@ -23,14 +23,9 @@ steps:
     artifact: 'lohi'
     publishLocation: 'pipeline'
     
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/TEST-*.xml'
+
   
-- task: SonarQubePublish@4
-  inputs:
-    pollingTimeoutSec: '300'
+
   
 - task: PublishBuildArtifacts@1
   inputs:
