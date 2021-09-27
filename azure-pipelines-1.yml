@@ -59,7 +59,11 @@ stages:
         helmVersion: '2.14.1'
         installKubectl: true
 
-    - task: SonarQubeAnalyze@4
+    - task: PublishBuildArtifacts@1
+      inputs:
+       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+       ArtifactName: 'drop1'
+       publishLocation: 'Container'
   
     - task: DotNetCoreCLI@2
       inputs:
